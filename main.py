@@ -43,6 +43,19 @@ SORT_OPTIONS = ['Name', 'Elixir', 'Rarity', 'Arena']
 
 PLACEHOLDER_TEXT = 'No image'
 
+# Soft, eye-comfortable palette for the wiki-style interface
+APP_BG = '#f4f7fb'
+SURFACE = '#ffffff'
+SURFACE_ALT = '#f8fbfe'
+BORDER = '#d9e3ee'
+TEXT = '#102030'
+SUBTEXT = '#5f6f82'
+ACCENT = '#6e8fb2'
+ACCENT_SOFT = '#e4eef8'
+GOOD = '#2f855a'
+WARN = '#b7791f'
+BAD = '#b45309'
+
 
 def ensure_db_schema():
     conn = sqlite3.connect(DB_PATH)
@@ -157,10 +170,11 @@ class ClashPediaApp:
     def __init__(self):
         ensure_db_schema()
 
-        self.window = ttk.Window(themename='flatly')
+        self.window = ttk.Window(themename='litera')
         self.window.title('ClashPedia')
         self.window.geometry('1500x920')
         self.window.minsize(1280, 800)
+        self.window.configure(bg=APP_BG)
 
         self.cards = self.load_cards()
         self.cards_by_file = {
@@ -212,64 +226,65 @@ class ClashPediaApp:
         }
 
     def build_shell(self):
+
         root = self.window
 
-        top = tk.Frame(root, bg='#0f172a', height=92)
+        top = tk.Frame(root, bg='#eef4fa', height=92, highlightbackground=BORDER, highlightthickness=1)
         top.pack(side=TOP, fill=X)
         top.pack_propagate(False)
 
-        left_brand = tk.Frame(top, bg='#0f172a')
+        left_brand = tk.Frame(top, bg='#eef4fa')
         left_brand.pack(side=LEFT, fill=Y, padx=18, pady=12)
 
         logo_img = self.load_photo(LOGO_PATH, (70, 70))
         if logo_img is not None:
-            logo = tk.Label(left_brand, image=logo_img, bg='#0f172a')
+            logo = tk.Label(left_brand, image=logo_img, bg='#eef4fa')
             logo.image = logo_img
             logo.pack(side=LEFT, padx=(0, 12))
-        text_box = tk.Frame(left_brand, bg='#0f172a')
+        text_box = tk.Frame(left_brand, bg='#eef4fa')
         text_box.pack(side=LEFT)
         tk.Label(
             text_box,
             text='ClashPedia',
-            fg='white',
-            bg='#0f172a',
+            fg=TEXT,
+            bg='#eef4fa',
             font=('Segoe UI', 22, 'bold'),
         ).pack(anchor='w')
         tk.Label(
             text_box,
             text='Clash Royale encyclopedia • cards • decks • profiles',
-            fg='#cbd5e1',
-            bg='#0f172a',
+            fg=SUBTEXT,
+            bg='#eef4fa',
             font=('Segoe UI', 10),
         ).pack(anchor='w')
 
-        hero_hint = tk.Frame(top, bg='#0f172a')
+        hero_hint = tk.Frame(top, bg='#eef4fa')
         hero_hint.pack(side=RIGHT, padx=18, pady=18)
         tk.Label(
             hero_hint,
             text='Wiki-style card browser',
-            fg='white',
-            bg='#1d4ed8',
+            fg=TEXT,
+            bg=ACCENT_SOFT,
             font=('Segoe UI', 11, 'bold'),
             padx=12,
             pady=6,
         ).pack()
 
-        body = tk.Frame(root, bg='#eef2f7')
+        body = tk.Frame(root, bg=APP_BG)
         body.pack(fill=BOTH, expand=True)
 
-        sidebar = tk.Frame(body, bg='#f8fafc', width=240, bd=0, highlightthickness=1, highlightbackground='#d9e2ec')
+        sidebar = tk.Frame(body, bg='#fbfdff', width=240, bd=0, highlightthickness=1, highlightbackground=BORDER)
         sidebar.pack(side=LEFT, fill=Y)
         sidebar.pack_propagate(False)
 
-        self.content = tk.Frame(body, bg='#eef2f7')
+        self.content = tk.Frame(body, bg=APP_BG)
         self.content.pack(side=LEFT, fill=BOTH, expand=True)
 
         tk.Label(
             sidebar,
             text='Navigation',
-            bg='#f8fafc',
-            fg='#334155',
+            bg='#fbfdff',
+            fg=TEXT,
             font=('Segoe UI', 11, 'bold'),
             padx=16,
             pady=14,
@@ -291,22 +306,22 @@ class ClashPediaApp:
                 padx=16,
                 pady=14,
                 font=('Segoe UI', 11),
-                bg='#f8fafc',
-                fg='#0f172a',
-                activebackground='#dbeafe',
-                activeforeground='#0f172a',
+                bg='#fbfdff',
+                fg=TEXT,
+                activebackground=ACCENT_SOFT,
+                activeforeground=TEXT,
                 command=lambda v=view: self.show_view(v),
             )
             btn.pack(fill=X, padx=10, pady=4)
             self.nav_buttons[view] = btn
 
-        footer = tk.Frame(sidebar, bg='#f8fafc')
+        footer = tk.Frame(sidebar, bg='#fbfdff')
         footer.pack(side=BOTTOM, fill=X, padx=16, pady=18)
         tk.Label(
             footer,
             text='Clash Royale Wiki inspired layout',
-            bg='#f8fafc',
-            fg='#64748b',
+            bg='#fbfdff',
+            fg=SUBTEXT,
             wraplength=190,
             justify='left',
             font=('Segoe UI', 9),
@@ -361,28 +376,40 @@ class ClashPediaApp:
             return None
 
     def card_tile(self, parent, card, on_click=None, compact=False):
-        frame = tk.Frame(parent, bg='white', bd=1, relief='solid', highlightthickness=0)
-        frame.bind('<Button-1>', lambda e: on_click(card) if on_click else None)
+
+        frame = tk.Frame(
+            parent,
+            bg=SURFACE,
+            bd=1,
+            relief='solid',
+            highlightthickness=0,
+            width=188 if compact else 220,
+            height=compact and 250 or 290,
+        )
+        frame.pack_propagate(False)
+        if on_click:
+            frame.configure(cursor='hand2')
+            frame.bind('<Button-1>', lambda e: on_click(card) if on_click else None)
 
         image_path = card.get('full_image_path')
         if image_path and Path(image_path).exists():
-            size = (84, 112) if compact else (100, 134)
+            size = (98, 132) if compact else (126, 168)
             photo = self.load_photo(image_path, size)
             if photo is not None:
-                img = tk.Label(frame, image=photo, bg='white')
+                img = tk.Label(frame, image=photo, bg=SURFACE)
                 img.image = photo
-                img.pack(padx=8, pady=(8, 4))
+                img.pack(padx=10, pady=(10, 6))
                 img.bind('<Button-1>', lambda e: on_click(card) if on_click else None)
                 self._image_refs.append(photo)
         else:
-            placeholder = tk.Frame(frame, width=100, height=134, bg='#edf2f7', bd=0)
-            placeholder.pack(padx=8, pady=(8, 4))
+            placeholder = tk.Frame(frame, width=126 if not compact else 98, height=132 if compact else 168, bg='#edf3f8', bd=0)
+            placeholder.pack(padx=10, pady=(10, 6))
             placeholder.pack_propagate(False)
             tk.Label(
                 placeholder,
                 text=PLACEHOLDER_TEXT,
-                bg='#edf2f7',
-                fg='#64748b',
+                bg='#edf3f8',
+                fg=SUBTEXT,
                 wraplength=90,
                 justify='center',
                 font=('Segoe UI', 9),
@@ -392,21 +419,34 @@ class ClashPediaApp:
         tk.Label(
             frame,
             text=name,
-            bg='white',
-            fg='#0f172a',
+            bg=SURFACE,
+            fg=TEXT,
             font=('Segoe UI', 10, 'bold'),
-            wraplength=130,
+            wraplength=160 if compact else 190,
             justify='center',
-        ).pack(fill=X, padx=6)
+        ).pack(fill=X, padx=8)
 
         meta = f"{card.get('card_type', '')} • {card.get('rarity', '')}"
         tk.Label(
             frame,
             text=meta.strip(' •'),
-            bg='white',
-            fg='#64748b',
+            bg=SURFACE,
+            fg=SUBTEXT,
             font=('Segoe UI', 8),
-        ).pack(fill=X, padx=6, pady=(1, 8))
+        ).pack(fill=X, padx=8, pady=(2, 0))
+
+        elixir = card.get('elixir')
+        if elixir not in (None, ''):
+            badge = tk.Label(
+                frame,
+                text=f'{elixir} elixir',
+                bg=ACCENT_SOFT,
+                fg=TEXT,
+                font=('Segoe UI', 8, 'bold'),
+                padx=8,
+                pady=2,
+            )
+            badge.pack(pady=(6, 8))
 
         if on_click:
             for child in frame.winfo_children():
@@ -424,22 +464,22 @@ class ClashPediaApp:
         page = ScrolledFrame(self.content, autohide=True, padding=16)
         page.pack(fill=BOTH, expand=True)
 
-        hero = tk.Frame(page, bg='white', bd=1, relief='solid')
+        hero = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         hero.pack(fill=X, pady=(0, 16))
-        hero_left = tk.Frame(hero, bg='white')
+        hero_left = tk.Frame(hero, bg=SURFACE)
         hero_left.pack(side=LEFT, fill=BOTH, expand=True, padx=24, pady=22)
 
         tk.Label(
             hero_left,
             text='ClashPedia',
-            bg='white',
+            bg=SURFACE,
             fg='#0f172a',
             font=('Segoe UI', 28, 'bold'),
         ).pack(anchor='w')
         tk.Label(
             hero_left,
             text='A cleaner Clash Royale encyclopedia for browsing cards, checking deck balance, and making profiles.',
-            bg='white',
+            bg=SURFACE,
             fg='#475569',
             font=('Segoe UI', 12),
             wraplength=760,
@@ -448,7 +488,7 @@ class ClashPediaApp:
         tk.Label(
             hero_left,
             text='Cards are organized like a wiki: by type, rarity, elixir, and arena.',
-            bg='white',
+            bg=SURFACE,
             fg='#1d4ed8',
             font=('Segoe UI', 10, 'bold'),
         ).pack(anchor='w', pady=(10, 0))
@@ -462,17 +502,17 @@ class ClashPediaApp:
             ('Properties', len(PROPERTY_ORDER)),
         ]
         for label, value in stats:
-            box = tk.Frame(hero_stats, bg='white', bd=1, relief='solid')
+            box = tk.Frame(hero_stats, bg=SURFACE, bd=1, relief='solid')
             box.pack(fill=X, pady=6)
-            tk.Label(box, text=str(value), bg='white', fg='#0f172a', font=('Segoe UI', 18, 'bold')).pack(pady=(8, 0))
-            tk.Label(box, text=label, bg='white', fg='#64748b', font=('Segoe UI', 9)).pack(pady=(0, 8))
+            tk.Label(box, text=str(value), bg=SURFACE, fg='#0f172a', font=('Segoe UI', 18, 'bold')).pack(pady=(8, 0))
+            tk.Label(box, text=label, bg=SURFACE, fg='#64748b', font=('Segoe UI', 9)).pack(pady=(0, 8))
 
-        section = tk.Frame(page, bg='white', bd=1, relief='solid')
+        section = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         section.pack(fill=X, pady=(0, 16))
         tk.Label(
             section,
             text='What this app matches from the real Clash Royale wiki',
-            bg='white',
+            bg=SURFACE,
             fg='#0f172a',
             font=('Segoe UI', 14, 'bold'),
         ).pack(anchor='w', padx=18, pady=(14, 8))
@@ -486,7 +526,7 @@ class ClashPediaApp:
         tk.Label(
             section,
             text=bullets,
-            bg='white',
+            bg=SURFACE,
             fg='#334155',
             justify='left',
             font=('Segoe UI', 11),
@@ -494,17 +534,17 @@ class ClashPediaApp:
             pady=10,
         ).pack(anchor='w')
 
-        preview = tk.Frame(page, bg='white', bd=1, relief='solid')
+        preview = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         preview.pack(fill=X)
         tk.Label(
             preview,
             text='Featured categories',
-            bg='white',
+            bg=SURFACE,
             fg='#0f172a',
             font=('Segoe UI', 14, 'bold'),
         ).pack(anchor='w', padx=18, pady=(14, 6))
 
-        row = tk.Frame(preview, bg='white')
+        row = tk.Frame(preview, bg=SURFACE)
         row.pack(fill=X, padx=18, pady=(0, 18))
         for label, subtitle in [
             ('Troop Cards', 'Units deployed onto the battlefield'),
@@ -555,28 +595,29 @@ class ClashPediaApp:
         return sorted(cards, key=lambda c: str(c.get('name') or '').lower())
 
     def render_cards_page(self):
+
         outer = ScrolledFrame(self.content, autohide=True, padding=16)
         outer.pack(fill=BOTH, expand=True)
 
-        header = tk.Frame(outer, bg='white', bd=1, relief='solid')
+        header = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
         header.pack(fill=X)
-        tk.Label(header, text='Cards', bg='white', fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
+        tk.Label(header, text='Cards', bg=SURFACE, fg=TEXT, font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
         tk.Label(
             header,
             text='Browse the card database with wiki-style filters and a live detail panel.',
-            bg='white',
-            fg='#64748b',
+            bg=SURFACE,
+            fg=SUBTEXT,
             font=('Segoe UI', 10),
         ).pack(anchor='w', padx=18, pady=(0, 14))
 
-        controls = tk.Frame(outer, bg='white', bd=1, relief='solid')
+        controls = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
         controls.pack(fill=X, pady=16)
 
-        search_row = tk.Frame(controls, bg='white')
+        search_row = tk.Frame(controls, bg=SURFACE)
         search_row.pack(fill=X, padx=18, pady=(16, 10))
 
-        tk.Label(search_row, text='Search', bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
-        search_entry = ttk.Entry(search_row, textvariable=self.current_search, width=34)
+        tk.Label(search_row, text='Search', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
+        search_entry = ttk.Entry(search_row, textvariable=self.current_search, width=36)
         search_entry.pack(side=LEFT, padx=(0, 16))
         search_entry.focus_set()
 
@@ -586,12 +627,12 @@ class ClashPediaApp:
         sort_var = tk.StringVar(value=self.current_sort)
         sort_box = ttk.Combobox(search_row, values=SORT_OPTIONS, textvariable=sort_var, state='readonly', width=16)
         sort_box.pack(side=RIGHT)
-        tk.Label(search_row, text='Sort by', bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=RIGHT, padx=(0, 10))
+        tk.Label(search_row, text='Sort by', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold')).pack(side=RIGHT, padx=(0, 10))
 
-        filter_row = tk.Frame(controls, bg='white')
+        filter_row = tk.Frame(controls, bg=SURFACE)
         filter_row.pack(fill=X, padx=18, pady=(0, 16))
 
-        tk.Label(filter_row, text='Type', bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
+        tk.Label(filter_row, text='Type', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
         type_buttons = {}
         for label in FILTER_OPTIONS:
             btn = tk.Button(
@@ -600,15 +641,15 @@ class ClashPediaApp:
                 relief='flat',
                 padx=12,
                 pady=6,
-                bg='#dbeafe' if label == 'All' else '#f8fafc',
-                fg='#0f172a',
-                activebackground='#bfdbfe',
+                bg=ACCENT_SOFT if label == 'All' else '#f3f7fb',
+                fg=TEXT,
+                activebackground='#d3e5f6',
                 command=lambda v=label: set_type(v),
             )
             btn.pack(side=LEFT, padx=4)
             type_buttons[label] = btn
 
-        tk.Label(filter_row, text='Rarity', bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(18, 10))
+        tk.Label(filter_row, text='Rarity', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(18, 10))
         rarity_buttons = {}
         for label in RARITY_OPTIONS:
             btn = tk.Button(
@@ -617,37 +658,164 @@ class ClashPediaApp:
                 relief='flat',
                 padx=12,
                 pady=6,
-                bg='#dbeafe' if label == 'All' else '#f8fafc',
-                fg='#0f172a',
-                activebackground='#bfdbfe',
+                bg=ACCENT_SOFT if label == 'All' else '#f3f7fb',
+                fg=TEXT,
+                activebackground='#d3e5f6',
                 command=lambda v=label: set_rarity(v),
             )
             btn.pack(side=LEFT, padx=4)
             rarity_buttons[label] = btn
 
-        body = tk.Frame(outer, bg='#eef2f7')
+        body = tk.Frame(outer, bg=APP_BG)
         body.pack(fill=BOTH, expand=True)
 
-        catalog_box = tk.Frame(body, bg='white', bd=1, relief='solid')
+        catalog_box = tk.Frame(body, bg=SURFACE, bd=1, relief='solid')
         catalog_box.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 12))
-        detail_box = tk.Frame(body, bg='white', bd=1, relief='solid', width=360)
+        detail_box = tk.Frame(body, bg=SURFACE, bd=1, relief='solid', width=430)
         detail_box.pack(side=RIGHT, fill=Y)
         detail_box.pack_propagate(False)
 
-        tk.Label(catalog_box, text='Card catalog', bg='white', fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
+        tk.Label(catalog_box, text='Card catalog', bg=SURFACE, fg=TEXT, font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
         catalog_scroll = ScrolledFrame(catalog_box, autohide=True, padding=12)
         catalog_scroll.pack(fill=BOTH, expand=True)
 
-        detail_title = tk.Label(detail_box, text='Select a card', bg='white', fg='#0f172a', font=('Segoe UI', 15, 'bold'))
-        detail_title.pack(anchor='w', padx=16, pady=(16, 8))
-        detail_content = tk.Frame(detail_box, bg='white')
-        detail_content.pack(fill=BOTH, expand=True, padx=16, pady=(0, 16))
+        tk.Label(detail_box, text='Card details', bg=SURFACE, fg=TEXT, font=('Segoe UI', 15, 'bold')).pack(anchor='w', padx=16, pady=(16, 8))
+        detail_scroll = ScrolledFrame(detail_box, autohide=True, padding=0)
+        detail_scroll.pack(fill=BOTH, expand=True, padx=16, pady=(0, 16))
+        detail_content = tk.Frame(detail_scroll, bg=SURFACE)
+        detail_content.pack(fill=BOTH, expand=True)
 
-        detail_image_label = tk.Label(detail_content, bg='white')
-        detail_image_label.pack(anchor='center', pady=(0, 10))
+        detail_title = tk.Label(detail_content, text='Select a card', bg=SURFACE, fg=TEXT, font=('Segoe UI', 16, 'bold'))
+        detail_title.pack(anchor='w', pady=(0, 10))
 
-        detail_text = tk.Label(detail_content, bg='white', fg='#334155', justify='left', wraplength=300, font=('Segoe UI', 10))
-        detail_text.pack(anchor='w')
+        detail_image_label = tk.Label(detail_content, bg=SURFACE)
+        detail_image_label.pack(anchor='center', pady=(0, 12))
+
+        detail_meta = tk.Frame(detail_content, bg=SURFACE)
+        detail_meta.pack(fill=X, pady=(0, 10))
+
+        detail_desc_title = tk.Label(detail_content, text='Description', bg=SURFACE, fg=TEXT, font=('Segoe UI', 11, 'bold'))
+        detail_desc_title.pack(anchor='w', pady=(8, 4))
+        detail_desc = tk.Label(detail_content, bg=SURFACE, fg='#334155', justify='left', wraplength=360, font=('Segoe UI', 10))
+        detail_desc.pack(anchor='w')
+
+        detail_stats_box = tk.Frame(detail_content, bg=SURFACE)
+        detail_stats_box.pack(fill=X, pady=(10, 0))
+
+        def clear_detail_meta():
+            for child in detail_meta.winfo_children():
+                child.destroy()
+            for child in detail_stats_box.winfo_children():
+                child.destroy()
+
+        def add_pill(parent, text, bg='#eef5fb'):
+            pill = tk.Label(parent, text=text, bg=bg, fg=TEXT, font=('Segoe UI', 9, 'bold'), padx=10, pady=4)
+            pill.pack(side=LEFT, padx=(0, 8), pady=4)
+            return pill
+
+        def show_detail(card):
+            detail_title.configure(text=card.get('name') or 'Unknown')
+            clear_detail_meta()
+
+            photo = self.card_image_for_detail(card)
+            if photo is not None:
+                detail_image_label.configure(image=photo, text='')
+                detail_image_label.image = photo
+                self._image_refs.append(photo)
+            else:
+                detail_image_label.configure(image='', text=PLACEHOLDER_TEXT, fg=SUBTEXT)
+
+            add_pill(detail_meta, f"Rarity: {pretty_title(card.get('rarity'))}")
+            add_pill(detail_meta, f"Type: {card.get('card_type') or 'Unknown'}")
+            add_pill(detail_meta, f"Elixir: {card.get('elixir') or 'Unknown'}", bg=ACCENT_SOFT)
+            add_pill(detail_meta, f"Arena: {pretty_arena(card.get('arena'))}")
+
+            detail_desc.configure(
+                text=str(card.get('description') or 'No description available.').strip().replace('“', '"').replace('”', '"')
+            )
+
+            stats = []
+            if card.get('hitpoints') not in (None, ''):
+                stats.append(('Hitpoints', card.get('hitpoints')))
+            if card.get('damage') not in (None, ''):
+                stats.append(('Damage', card.get('damage')))
+            if card.get('card_range') not in (None, ''):
+                stats.append(('Range', card.get('card_range')))
+            if card.get('stun_duration') not in (None, ''):
+                stats.append(('Stun', card.get('stun_duration')))
+            if card.get('shield') not in (None, '', '-'):
+                stats.append(('Shield', card.get('shield')))
+            if card.get('movement_speed') not in (None, '', '-'):
+                stats.append(('Movement', card.get('movement_speed')))
+            if card.get('radius') not in (None, '', '-'):
+                stats.append(('Radius', card.get('radius')))
+
+            if stats:
+                tk.Label(detail_stats_box, text='Stats', bg=SURFACE, fg=TEXT, font=('Segoe UI', 11, 'bold')).pack(anchor='w', pady=(0, 8))
+                grid = tk.Frame(detail_stats_box, bg=SURFACE)
+                grid.pack(fill=X)
+                for index, (label, value) in enumerate(stats):
+                    chip = tk.Frame(grid, bg='#f3f7fb', bd=1, relief='solid')
+                    chip.grid(row=index // 2, column=index % 2, sticky='nsew', padx=4, pady=4)
+                    tk.Label(chip, text=label, bg='#f3f7fb', fg=SUBTEXT, font=('Segoe UI', 8)).pack(anchor='w', padx=8, pady=(6, 0))
+                    tk.Label(chip, text=str(value), bg='#f3f7fb', fg=TEXT, font=('Segoe UI', 10, 'bold'), wraplength=150, justify='left').pack(anchor='w', padx=8, pady=(0, 6))
+                for c in range(2):
+                    grid.columnconfigure(c, weight=1)
+
+        def set_type(value):
+            type_var.set(value)
+            update_filters()
+
+        def set_rarity(value):
+            rarity_var.set(value)
+            update_filters()
+
+        def update_button_states():
+            for label, btn in type_buttons.items():
+                btn.configure(bg=ACCENT_SOFT if type_var.get() == label else '#f3f7fb')
+            for label, btn in rarity_buttons.items():
+                btn.configure(bg=ACCENT_SOFT if rarity_var.get() == label else '#f3f7fb')
+
+        def render_catalog():
+            for widget in catalog_scroll.winfo_children():
+                widget.destroy()
+
+            cards = self.filtered_cards(
+                search_text=self.current_search.get(),
+                card_type=type_var.get(),
+                rarity=rarity_var.get(),
+            )
+
+            if not cards:
+                tk.Label(
+                    catalog_scroll,
+                    text='No cards found.',
+                    bg=SURFACE,
+                    fg=SUBTEXT,
+                    font=('Segoe UI', 11),
+                ).pack(pady=40)
+                return
+
+            columns = 3
+            for index, card in enumerate(cards):
+                tile = self.card_tile(catalog_scroll, card, on_click=show_detail, compact=False)
+                r = index // columns
+                c = index % columns
+                tile.grid(row=r, column=c, padx=10, pady=10, sticky='nsew')
+
+            for c in range(columns):
+                catalog_scroll.columnconfigure(c, weight=1)
+
+            show_detail(cards[0])
+
+        def update_filters():
+            self.current_sort = sort_var.get()
+            update_button_states()
+            render_catalog()
+
+        sort_box.bind('<<ComboboxSelected>>', lambda e: update_filters())
+        self.current_search.trace_add('write', lambda *args: render_catalog())
+        render_catalog()
 
         def show_detail(card):
             detail_title.configure(text=card.get('name') or 'Unknown')
@@ -722,7 +890,7 @@ class ClashPediaApp:
                 tk.Label(
                     catalog_scroll,
                     text='No cards found.',
-                    bg='white',
+                    bg=SURFACE,
                     fg='#64748b',
                     font=('Segoe UI', 11),
                 ).pack(pady=40)
@@ -754,7 +922,7 @@ class ClashPediaApp:
         for widget in parent.winfo_children():
             widget.destroy()
 
-        preview_wrap = tk.Frame(parent, bg='white')
+        preview_wrap = tk.Frame(parent, bg=SURFACE)
         preview_wrap.pack(fill=BOTH, expand=True)
 
         slots = cards[:8]
@@ -766,22 +934,22 @@ class ClashPediaApp:
                 bg='#f8fafc',
                 bd=1,
                 relief='solid',
-                width=74,
-                height=108,
+                width=80,
+                height=112,
             )
             slot.grid(row=row, column=col, padx=4, pady=4, sticky='nsew')
             slot.pack_propagate(False)
 
             if index < len(slots):
                 card = slots[index]
-                photo = self.load_photo(card.get('full_image_path'), (54, 72)) if card.get('full_image_path') else None
+                photo = self.load_photo(card.get('full_image_path'), (58, 78)) if card.get('full_image_path') else None
                 if photo is not None:
                     label = tk.Label(slot, image=photo, bg='#f8fafc')
                     label.image = photo
                     label.pack(pady=(5, 0))
                     self._image_refs.append(photo)
                 else:
-                    tk.Label(slot, text=PLACEHOLDER_TEXT, bg='#f8fafc', fg='#64748b', wraplength=60, justify='center', font=('Segoe UI', 7)).pack(expand=True)
+                    tk.Label(slot, text=PLACEHOLDER_TEXT, bg='#f8fafc', fg='#64748b', wraplength=68, justify='center', font=('Segoe UI', 7)).pack(expand=True)
                 tk.Label(slot, text=str(card.get('name') or ''), bg='#f8fafc', fg='#0f172a', wraplength=62, justify='center', font=('Segoe UI', 7, 'bold')).pack(pady=(0, 4))
             else:
                 tk.Label(slot, text=f'Slot {index + 1}', bg='#f8fafc', fg='#94a3b8', font=('Segoe UI', 8)).pack(expand=True)
@@ -790,27 +958,28 @@ class ClashPediaApp:
             preview_wrap.columnconfigure(col, weight=1)
 
     def render_deck_builder_page(self):
+
         page = ScrolledFrame(self.content, autohide=True, padding=16)
         page.pack(fill=BOTH, expand=True)
 
-        header = tk.Frame(page, bg='white', bd=1, relief='solid')
+        header = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         header.pack(fill=X)
-        tk.Label(header, text='Deck Builder', bg='white', fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
+        tk.Label(header, text='Deck Builder', bg=SURFACE, fg=TEXT, font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
         tk.Label(
             header,
-            text='Choose one of the ten decks, then open the editor to add cards clearly from the card catalog.',
-            bg='white',
-            fg='#64748b',
+            text='Click a deck block to open the editor, then add cards from the catalog.',
+            bg=SURFACE,
+            fg=SUBTEXT,
             font=('Segoe UI', 10),
         ).pack(anchor='w', padx=18, pady=(0, 14))
 
-        info = tk.Frame(page, bg='#eff6ff', bd=1, relief='solid')
+        info = tk.Frame(page, bg='#eef5fb', bd=1, relief='solid')
         info.pack(fill=X, pady=16)
         tk.Label(
             info,
-            text='How to build a deck: 1) click Edit deck, 2) browse cards, 3) click a card to add, 4) click a card in the deck tray to remove, 5) save.',
-            bg='#eff6ff',
-            fg='#1e3a8a',
+            text='How to build a deck: click the deck block, browse cards, click cards to add them, click cards in the tray to remove them, then save.',
+            bg='#eef5fb',
+            fg=TEXT,
             font=('Segoe UI', 10, 'bold'),
             wraplength=1200,
             justify='left',
@@ -818,39 +987,72 @@ class ClashPediaApp:
             pady=12,
         ).pack(anchor='w')
 
-        gallery = tk.Frame(page, bg='white', bd=1, relief='solid')
+        gallery = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         gallery.pack(fill=BOTH, expand=True)
 
-        tk.Label(gallery, text='Saved deck slots', bg='white', fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
+        top_bar = tk.Frame(gallery, bg=SURFACE)
+        top_bar.pack(fill=X, padx=16, pady=(14, 8))
+        tk.Label(top_bar, text='Saved deck slots', bg=SURFACE, fg=TEXT, font=('Segoe UI', 13, 'bold')).pack(side=LEFT)
+        tk.Label(top_bar, text='8 cards each', bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 9)).pack(side=RIGHT)
 
-        deck_grid = tk.Frame(gallery, bg='white')
+        deck_grid = tk.Frame(gallery, bg=SURFACE)
         deck_grid.pack(fill=BOTH, expand=True, padx=10, pady=(0, 12))
 
         for index in range(10):
             deck_name = f'Deck {index + 1}'
-            card = tk.Frame(deck_grid, bg='#f8fafc', bd=1, relief='solid', width=360, height=280)
+            deck_cards = list(self.decks.get(deck_name, []))
+            breakdown = self.deck_breakdown(deck_cards)
+
+            card = tk.Frame(deck_grid, bg='#fbfdff', bd=1, relief='solid', width=390, height=320, highlightthickness=1, highlightbackground=BORDER)
             card.grid(row=index // 2, column=index % 2, padx=10, pady=10, sticky='nsew')
             card.pack_propagate(False)
 
-            tk.Label(card, text=deck_name, bg='#f8fafc', fg='#0f172a', font=('Segoe UI', 14, 'bold')).pack(anchor='w', padx=14, pady=(12, 6))
-            tk.Label(card, text='8-card deck slot', bg='#f8fafc', fg='#64748b', font=('Segoe UI', 9)).pack(anchor='w', padx=14, pady=(0, 10))
+            open_editor = lambda n=deck_name: self.open_deck_editor(n)
+            card.bind('<Button-1>', lambda e, n=deck_name: self.open_deck_editor(n))
+            for child in card.winfo_children():
+                child.bind('<Button-1>', lambda e, n=deck_name: self.open_deck_editor(n))
 
-            preview = tk.Frame(card, bg='#f8fafc')
-            preview.pack(fill=X, padx=10)
-            self.build_deck_preview(preview, self.decks[deck_name])
+            title_btn = tk.Button(
+                card,
+                text=deck_name + '\nClick to edit',
+                command=open_editor,
+                relief='flat',
+                bg=ACCENT_SOFT,
+                fg=TEXT,
+                activebackground='#d3e5f6',
+                font=('Segoe UI', 14, 'bold'),
+                padx=12,
+                pady=12,
+                justify='left',
+                anchor='w',
+                wraplength=300,
+            )
+            title_btn.pack(fill=X, padx=12, pady=(12, 8))
 
-            button_row = tk.Frame(card, bg='#f8fafc')
-            button_row.pack(fill=X, padx=14, pady=12)
+            stats_row = tk.Frame(card, bg='#fbfdff')
+            stats_row.pack(fill=X, padx=12)
+            stat_items = [
+                ('Cards', f'{len(deck_cards)}/8'),
+                ('Avg elixir', f"{breakdown['avg']:.1f}"),
+                ('Eval', self.deck_balance_label(deck_cards)),
+            ]
+            for label, value in stat_items:
+                box = tk.Frame(stats_row, bg=SURFACE, bd=1, relief='solid')
+                box.pack(side=LEFT, expand=True, fill=BOTH, padx=4)
+                tk.Label(box, text=label, bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 8)).pack(anchor='w', padx=8, pady=(6, 0))
+                tk.Label(box, text=value, bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold'), wraplength=110, justify='left').pack(anchor='w', padx=8, pady=(0, 6))
 
-            ttk.Button(button_row, text='Edit deck', bootstyle='primary', command=lambda n=deck_name: self.open_deck_editor(n)).pack(side=LEFT)
-            ttk.Button(button_row, text='Analyze', bootstyle='secondary', command=lambda n=deck_name: self.open_result_page(n)).pack(side=LEFT, padx=8)
+            preview = tk.Frame(card, bg='#fbfdff')
+            preview.pack(fill=X, padx=12, pady=(10, 0))
+            self.build_deck_preview(preview, deck_cards)
 
-            deck_cards = self.decks[deck_name]
-            avg = self.average_elixir(deck_cards)
-            summary = f'{len(deck_cards)}/8 cards'
-            if deck_cards:
-                summary += f' • Avg elixir {avg:.1f}'
-            tk.Label(card, text=summary, bg='#f8fafc', fg='#334155', font=('Segoe UI', 9, 'bold')).pack(anchor='w', padx=14, pady=(0, 12))
+            note_text = ' • '.join(breakdown['notes']) if breakdown['notes'] else 'Ready for battle'
+            tk.Label(card, text=note_text, bg='#fbfdff', fg=SUBTEXT, font=('Segoe UI', 9), wraplength=340, justify='left').pack(anchor='w', padx=12, pady=(8, 10))
+
+            action_row = tk.Frame(card, bg='#fbfdff')
+            action_row.pack(fill=X, padx=12, pady=(0, 12))
+            ttk.Button(action_row, text='Edit', bootstyle='primary', command=open_editor).pack(side=LEFT)
+            ttk.Button(action_row, text='Analyze', bootstyle='secondary', command=lambda n=deck_name: self.open_result_page(n)).pack(side=LEFT, padx=8)
 
         for c in range(2):
             deck_grid.columnconfigure(c, weight=1)
@@ -866,10 +1068,73 @@ class ClashPediaApp:
             return 0.0
         return sum(values) / len(values)
 
+    def deck_breakdown(self, cards):
+        counts = {
+            'Troop': 0,
+            'Spell': 0,
+            'Building': 0,
+            'Win Conditions': 0,
+            'Spells': 0,
+            'Buildings': 0,
+            'Mini Tanks': 0,
+            'Damage Units': 0,
+            'Funny': 0,
+        }
+        for card in cards:
+            card_type = str(card.get('card_type') or '').title()
+            if card_type in counts:
+                counts[card_type] += 1
+
+            prop = pretty_property(card.get('property'))
+            if prop in counts:
+                counts[prop] += 1
+
+        avg = self.average_elixir(cards)
+
+        notes = []
+        verdict = 'Needs cards'
+        if not cards:
+            notes.append('Add cards to begin')
+        else:
+            if len(cards) < 8:
+                notes.append(f'{8 - len(cards)} slot(s) open')
+            if counts['Win Conditions'] < 1:
+                notes.append('Add a win condition')
+            if counts['Spells'] < 1:
+                notes.append('Add at least one spell')
+            if counts['Buildings'] > 2:
+                notes.append('Too many buildings')
+            if not notes and len(cards) == 8:
+                notes.append('Balanced mix of cards')
+            if len(cards) == 8 and 3.0 <= avg <= 4.5 and counts['Win Conditions'] >= 1 and counts['Spells'] >= 1:
+                verdict = 'Balanced'
+            elif len(cards) == 8:
+                verdict = 'Playable'
+            else:
+                verdict = 'Incomplete'
+
+        return {
+            'avg': avg,
+            'counts': counts,
+            'verdict': verdict,
+            'notes': notes,
+        }
+
+    def deck_balance_label(self, cards):
+        breakdown = self.deck_breakdown(cards)
+        verdict = breakdown['verdict']
+        if verdict == 'Balanced':
+            return 'Balanced deck'
+        if verdict == 'Playable':
+            return 'Playable deck'
+        if verdict == 'Incomplete':
+            return 'Missing cards'
+        return 'Needs work'
+
     def open_result_page(self, deck_name):
         result_window = tk.Toplevel(self.window)
         result_window.title(f'{deck_name} - Deck Analysis')
-        result_window.geometry('1100x820')
+        result_window.geometry('1120x840')
         result_window.transient(self.window)
 
         selected = list(self.decks.get(deck_name, []))
@@ -877,16 +1142,16 @@ class ClashPediaApp:
         outer = ScrolledFrame(result_window, autohide=True, padding=16)
         outer.pack(fill=BOTH, expand=True)
 
-        header = tk.Frame(outer, bg='white', bd=1, relief='solid')
+        header = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
         header.pack(fill=X)
-        tk.Label(header, text=deck_name, bg='white', fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
-        tk.Label(header, text='Deck balance summary based on the existing property groups in the database.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 14))
+        tk.Label(header, text=deck_name, bg=SURFACE, fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
+        tk.Label(header, text='Deck balance summary based on the existing property groups in the database.', bg=SURFACE, fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 14))
 
         if not selected:
-            empty = tk.Frame(outer, bg='white', bd=1, relief='solid')
+            empty = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
             empty.pack(fill=X, pady=16)
-            tk.Label(empty, text='This deck is still empty.', bg='white', fg='#334155', font=('Segoe UI', 12, 'bold')).pack(anchor='w', padx=18, pady=(16, 6))
-            tk.Label(empty, text='Open the deck editor and add cards to analyze the deck.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 16))
+            tk.Label(empty, text='This deck is still empty.', bg=SURFACE, fg='#334155', font=('Segoe UI', 12, 'bold')).pack(anchor='w', padx=18, pady=(16, 6))
+            tk.Label(empty, text='Open the deck editor and add cards to analyze the deck.', bg=SURFACE, fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 16))
             return
 
         categories = {label: [] for label in PROPERTY_ORDER}
@@ -910,10 +1175,10 @@ class ClashPediaApp:
             ('Unique properties', str(sum(1 for cards in categories.values() if cards))),
         ]
         for label, value in stats:
-            box = tk.Frame(summary_row, bg='white', bd=1, relief='solid')
+            box = tk.Frame(summary_row, bg=SURFACE, bd=1, relief='solid')
             box.pack(side=LEFT, expand=True, fill=BOTH, padx=6)
-            tk.Label(box, text=value, bg='white', fg='#0f172a', font=('Segoe UI', 18, 'bold')).pack(pady=(12, 0))
-            tk.Label(box, text=label, bg='white', fg='#64748b', font=('Segoe UI', 9)).pack(pady=(0, 12))
+            tk.Label(box, text=value, bg=SURFACE, fg='#0f172a', font=('Segoe UI', 18, 'bold')).pack(pady=(12, 0))
+            tk.Label(box, text=label, bg=SURFACE, fg='#64748b', font=('Segoe UI', 9)).pack(pady=(0, 12))
 
         evaluation = {
             'Win Conditions': (1, 2),
@@ -923,22 +1188,22 @@ class ClashPediaApp:
             'Damage Units': (2, 4),
         }
 
-        eval_box = tk.Frame(outer, bg='white', bd=1, relief='solid')
+        eval_box = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
         eval_box.pack(fill=X, pady=(0, 16))
-        tk.Label(eval_box, text='Balance check', bg='white', fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
+        tk.Label(eval_box, text='Balance check', bg=SURFACE, fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
 
         for label, (min_count, max_count) in evaluation.items():
             count = len(categories.get(label, []))
             status = 'Good' if min_count <= count <= max_count else 'Needs work'
-            line = tk.Frame(eval_box, bg='white')
+            line = tk.Frame(eval_box, bg=SURFACE)
             line.pack(fill=X, padx=16, pady=4)
-            tk.Label(line, text=label, bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT)
-            tk.Label(line, text=f'{count} cards', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(side=LEFT, padx=10)
-            tk.Label(line, text=status, bg='white', fg='#1d4ed8' if status == 'Good' else '#b45309', font=('Segoe UI', 10, 'bold')).pack(side=RIGHT)
+            tk.Label(line, text=label, bg=SURFACE, fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT)
+            tk.Label(line, text=f'{count} cards', bg=SURFACE, fg='#64748b', font=('Segoe UI', 10)).pack(side=LEFT, padx=10)
+            tk.Label(line, text=status, bg=SURFACE, fg='#1d4ed8' if status == 'Good' else '#b45309', font=('Segoe UI', 10, 'bold')).pack(side=RIGHT)
 
-        deck_cards = tk.Frame(outer, bg='white', bd=1, relief='solid')
+        deck_cards = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
         deck_cards.pack(fill=BOTH, expand=True)
-        tk.Label(deck_cards, text='Deck cards', bg='white', fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
+        tk.Label(deck_cards, text='Deck cards', bg=SURFACE, fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
 
         deck_scroll = ScrolledFrame(deck_cards, autohide=True, padding=12)
         deck_scroll.pack(fill=BOTH, expand=True)
@@ -950,51 +1215,190 @@ class ClashPediaApp:
             deck_scroll.columnconfigure(c, weight=1)
 
     def open_deck_editor(self, deck_name):
+
         editor = tk.Toplevel(self.window)
         editor.title(f'Edit {deck_name}')
-        editor.geometry('1500x920')
+        editor.geometry('1520x940')
         editor.transient(self.window)
         editor.grab_set()
 
         selected = list(self.decks.get(deck_name, []))
 
-        outer = tk.Frame(editor, bg='#eef2f7')
+        outer = tk.Frame(editor, bg=APP_BG)
         outer.pack(fill=BOTH, expand=True)
 
-        header = tk.Frame(outer, bg='white', bd=1, relief='solid')
+        header = tk.Frame(outer, bg=SURFACE, bd=1, relief='solid')
         header.pack(fill=X, padx=16, pady=16)
 
-        tk.Label(header, text=f'Editing {deck_name}', bg='white', fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
-        tk.Label(header, text='Click cards to add them into the deck tray. Click a card in the tray to remove it.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 6))
+        tk.Label(header, text=f'Editing {deck_name}', bg=SURFACE, fg=TEXT, font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
+        tk.Label(header, text='Click cards to add them into the deck tray. Click a card in the tray to remove it.', bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 6))
 
-        deck_info = tk.Frame(header, bg='white')
+        deck_info = tk.Frame(header, bg=SURFACE)
         deck_info.pack(fill=X, padx=18, pady=(0, 16))
-        count_label = tk.Label(deck_info, text='', bg='white', fg='#0f172a', font=('Segoe UI', 11, 'bold'))
+        count_label = tk.Label(deck_info, text='', bg=SURFACE, fg=TEXT, font=('Segoe UI', 11, 'bold'))
         count_label.pack(side=LEFT)
-        avg_label = tk.Label(deck_info, text='', bg='white', fg='#334155', font=('Segoe UI', 10))
+        avg_label = tk.Label(deck_info, text='', bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 10))
         avg_label.pack(side=LEFT, padx=14)
+        balance_label = tk.Label(deck_info, text='', bg=ACCENT_SOFT, fg=TEXT, font=('Segoe UI', 10, 'bold'), padx=10, pady=4)
+        balance_label.pack(side=RIGHT)
 
-        body = tk.Frame(outer, bg='#eef2f7')
+        body = tk.Frame(outer, bg=APP_BG)
         body.pack(fill=BOTH, expand=True, padx=16, pady=(0, 16))
 
-        catalog_frame = tk.Frame(body, bg='white', bd=1, relief='solid')
+        catalog_frame = tk.Frame(body, bg=SURFACE, bd=1, relief='solid')
         catalog_frame.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 12))
 
-        tray_frame = tk.Frame(body, bg='white', bd=1, relief='solid', width=360)
+        tray_frame = tk.Frame(body, bg=SURFACE, bd=1, relief='solid', width=380)
         tray_frame.pack(side=RIGHT, fill=Y)
         tray_frame.pack_propagate(False)
 
-        tk.Label(tray_frame, text='Deck tray', bg='white', fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
-        tk.Label(tray_frame, text='This is where cards are added.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=16, pady=(0, 10))
+        tk.Label(tray_frame, text='Deck tray', bg=SURFACE, fg=TEXT, font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=16, pady=(14, 8))
+        tk.Label(tray_frame, text='This is where cards are added. Click a card to remove it.', bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 10)).pack(anchor='w', padx=16, pady=(0, 10))
 
         tray_scroll = ScrolledFrame(tray_frame, autohide=True, padding=12)
         tray_scroll.pack(fill=BOTH, expand=True)
 
-        control_bar = tk.Frame(tray_frame, bg='white')
-        control_bar.pack(fill=X, padx=16, pady=12)
-
         filter_var = tk.StringVar(value='All')
         search_var = tk.StringVar(value='')
+
+        def update_status():
+            breakdown = self.deck_breakdown(selected)
+            count_label.configure(text=f'{len(selected)}/8 cards')
+            avg_label.configure(text=f"Average elixir: {breakdown['avg']:.1f}")
+            balance_label.configure(text=self.deck_balance_label(selected))
+
+        def refresh_tray():
+            for widget in tray_scroll.winfo_children():
+                widget.destroy()
+
+            if not selected:
+                tk.Label(tray_scroll, text='No cards added yet.', bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 10)).pack(pady=18)
+                return
+
+            for index, card in enumerate(selected):
+                row = tk.Frame(tray_scroll, bg=SURFACE, bd=1, relief='solid')
+                row.pack(fill=X, pady=6)
+                photo = self.load_photo(card.get('full_image_path'), (64, 86)) if card.get('full_image_path') else None
+                if photo is not None:
+                    img = tk.Label(row, image=photo, bg=SURFACE)
+                    img.image = photo
+                    img.pack(side=LEFT, padx=8, pady=8)
+                    self._image_refs.append(photo)
+                else:
+                    tk.Frame(row, width=64, height=86, bg='#edf3f8').pack(side=LEFT, padx=8, pady=8)
+                info = tk.Frame(row, bg=SURFACE)
+                info.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 8), pady=8)
+                tk.Label(info, text=card.get('name') or 'Unknown', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold'), wraplength=180, justify='left').pack(anchor='w')
+                tk.Label(info, text=f"{card.get('card_type')} • {card.get('elixir')} elixir", bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 8)).pack(anchor='w', pady=(2, 0))
+                remove_btn = tk.Button(
+                    row,
+                    text='Remove',
+                    relief='flat',
+                    bg='#fde8e8',
+                    fg='#991b1b',
+                    activebackground='#fecaca',
+                    command=lambda c=card: remove_card(c),
+                )
+                remove_btn.pack(side=RIGHT, padx=8, pady=16)
+
+        def matches_filters(card):
+            text = search_var.get().strip().lower()
+            if text:
+                if text not in str(card.get('name', '')).lower() and text not in str(card.get('property', '')).lower() and text not in str(card.get('card_type', '')).lower():
+                    return False
+            if filter_var.get() != 'All' and card.get('card_type') != filter_var.get():
+                return False
+            return True
+
+        def refresh_catalog():
+            for widget in catalog_scroll.winfo_children():
+                widget.destroy()
+
+            filtered = [c for c in self.sort_cards(self.cards) if matches_filters(c)]
+
+            if not filtered:
+                tk.Label(catalog_scroll, text='No cards found.', bg=SURFACE, fg=SUBTEXT, font=('Segoe UI', 10)).pack(pady=18)
+                return
+
+            columns = 4
+            for index, card in enumerate(filtered):
+                tile = self.card_tile(catalog_scroll, card, on_click=lambda c, card=card: add_card(card), compact=True)
+                tile.grid(row=index // columns, column=index % columns, padx=8, pady=8, sticky='nsew')
+            for c in range(columns):
+                catalog_scroll.columnconfigure(c, weight=1)
+
+        def add_card(card):
+            if card in selected:
+                messagebox.showwarning('Repeated Card', 'This card is already in the deck.')
+                return
+            if len(selected) >= 8:
+                messagebox.showwarning('Deck Full', 'A deck can only have 8 cards.')
+                return
+            selected.append(card)
+            update_status()
+            refresh_tray()
+
+        def remove_card(card):
+            if card in selected:
+                selected.remove(card)
+                update_status()
+                refresh_tray()
+
+        def save_deck():
+            if len(selected) != 8:
+                messagebox.showwarning('Incomplete Deck', 'Choose exactly 8 cards before saving.')
+                return
+            self.decks[deck_name] = list(selected)
+            result_key = f"Result_{deck_name.split(' ')[1]}"
+            self.results[result_key] = list(selected)
+            self.build_deck_builder_page()
+            messagebox.showinfo('Deck Saved', f'{deck_name} has been saved.')
+
+        def clear_deck():
+            selected.clear()
+            update_status()
+            refresh_tray()
+
+        def apply_filters():
+            refresh_catalog()
+
+        top_filters = tk.Frame(catalog_frame, bg=SURFACE)
+        top_filters.pack(fill=X, padx=16, pady=(14, 10))
+        tk.Label(top_filters, text='Catalog filters', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
+
+        for label in FILTER_OPTIONS:
+            tk.Button(
+                top_filters,
+                text=label,
+                relief='flat',
+                padx=12,
+                pady=6,
+                bg=ACCENT_SOFT if label == 'All' else '#f3f7fb',
+                fg=TEXT,
+                activebackground='#d3e5f6',
+                command=lambda v=label: (filter_var.set(v), apply_filters()),
+            ).pack(side=LEFT, padx=4)
+
+        tk.Label(top_filters, text='Search', bg=SURFACE, fg=TEXT, font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(18, 8))
+        ttk.Entry(top_filters, textvariable=search_var, width=28).pack(side=LEFT)
+
+        cat_scroll = ScrolledFrame(catalog_frame, autohide=True, padding=12)
+        cat_scroll.pack(fill=BOTH, expand=True)
+
+        catalog_scroll = cat_scroll
+
+        search_var.trace_add('write', lambda *args: refresh_catalog())
+        filter_var.trace_add('write', lambda *args: refresh_catalog())
+
+        button_row = tk.Frame(tray_frame, bg=SURFACE)
+        button_row.pack(fill=X, padx=16, pady=(0, 16))
+        ttk.Button(button_row, text='Save deck', bootstyle='primary', command=save_deck).pack(side=LEFT)
+        ttk.Button(button_row, text='Clear', bootstyle='secondary', command=clear_deck).pack(side=LEFT, padx=8)
+        ttk.Button(button_row, text='Close', bootstyle='light', command=editor.destroy).pack(side=RIGHT)
+
+        update_status()
+        refresh_tray()
+        refresh_catalog()
 
         def update_status():
             count_label.configure(text=f'{len(selected)}/8 cards')
@@ -1005,24 +1409,24 @@ class ClashPediaApp:
                 widget.destroy()
 
             if not selected:
-                tk.Label(tray_scroll, text='No cards added yet.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(pady=18)
+                tk.Label(tray_scroll, text='No cards added yet.', bg=SURFACE, fg='#64748b', font=('Segoe UI', 10)).pack(pady=18)
                 return
 
             for index, card in enumerate(selected):
-                row = tk.Frame(tray_scroll, bg='white', bd=1, relief='solid')
+                row = tk.Frame(tray_scroll, bg=SURFACE, bd=1, relief='solid')
                 row.pack(fill=X, pady=6)
                 photo = self.load_photo(card.get('full_image_path'), (64, 86)) if card.get('full_image_path') else None
                 if photo is not None:
-                    img = tk.Label(row, image=photo, bg='white')
+                    img = tk.Label(row, image=photo, bg=SURFACE)
                     img.image = photo
                     img.pack(side=LEFT, padx=8, pady=8)
                     self._image_refs.append(photo)
                 else:
                     tk.Frame(row, width=64, height=86, bg='#edf2f7').pack(side=LEFT, padx=8, pady=8)
-                info = tk.Frame(row, bg='white')
+                info = tk.Frame(row, bg=SURFACE)
                 info.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 8), pady=8)
-                tk.Label(info, text=card.get('name') or 'Unknown', bg='white', fg='#0f172a', font=('Segoe UI', 10, 'bold'), wraplength=180, justify='left').pack(anchor='w')
-                tk.Label(info, text=f"{card.get('card_type')} • {card.get('elixir')} elixir", bg='white', fg='#64748b', font=('Segoe UI', 8)).pack(anchor='w', pady=(2, 0))
+                tk.Label(info, text=card.get('name') or 'Unknown', bg=SURFACE, fg='#0f172a', font=('Segoe UI', 10, 'bold'), wraplength=180, justify='left').pack(anchor='w')
+                tk.Label(info, text=f"{card.get('card_type')} • {card.get('elixir')} elixir", bg=SURFACE, fg='#64748b', font=('Segoe UI', 8)).pack(anchor='w', pady=(2, 0))
                 remove_btn = tk.Button(
                     row,
                     text='Remove',
@@ -1050,7 +1454,7 @@ class ClashPediaApp:
             filtered = [c for c in self.sort_cards(self.cards) if matches_filters(c)]
 
             if not filtered:
-                tk.Label(catalog_scroll, text='No cards found.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(pady=18)
+                tk.Label(catalog_scroll, text='No cards found.', bg=SURFACE, fg='#64748b', font=('Segoe UI', 10)).pack(pady=18)
                 return
 
             columns = 5
@@ -1095,9 +1499,9 @@ class ClashPediaApp:
         def apply_filters():
             refresh_catalog()
 
-        top_filters = tk.Frame(catalog_frame, bg='white')
+        top_filters = tk.Frame(catalog_frame, bg=SURFACE)
         top_filters.pack(fill=X, padx=16, pady=(14, 10))
-        tk.Label(top_filters, text='Catalog filters', bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
+        tk.Label(top_filters, text='Catalog filters', bg=SURFACE, fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 10))
 
         for label in FILTER_OPTIONS:
             tk.Button(
@@ -1112,7 +1516,7 @@ class ClashPediaApp:
                 command=lambda v=label: (filter_var.set(v), apply_filters()),
             ).pack(side=LEFT, padx=4)
 
-        tk.Label(top_filters, text='Search', bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(18, 8))
+        tk.Label(top_filters, text='Search', bg=SURFACE, fg='#334155', font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(18, 8))
         ttk.Entry(top_filters, textvariable=search_var, width=28).pack(side=LEFT)
 
         cat_scroll = ScrolledFrame(catalog_frame, autohide=True, padding=12)
@@ -1123,7 +1527,7 @@ class ClashPediaApp:
         search_var.trace_add('write', lambda *args: refresh_catalog())
         filter_var.trace_add('write', lambda *args: refresh_catalog())
 
-        button_row = tk.Frame(tray_frame, bg='white')
+        button_row = tk.Frame(tray_frame, bg=SURFACE)
         button_row.pack(fill=X, padx=16, pady=(0, 16))
         ttk.Button(button_row, text='Save deck', bootstyle='primary', command=save_deck).pack(side=LEFT)
         ttk.Button(button_row, text='Clear', bootstyle='secondary', command=clear_deck).pack(side=LEFT, padx=8)
@@ -1141,20 +1545,20 @@ class ClashPediaApp:
         page = ScrolledFrame(self.content, autohide=True, padding=16)
         page.pack(fill=BOTH, expand=True)
 
-        header = tk.Frame(page, bg='white', bd=1, relief='solid')
+        header = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         header.pack(fill=X)
-        tk.Label(header, text='Profile Maker', bg='white', fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
-        tk.Label(header, text='Add a new card using the same fields already used by the database.', bg='white', fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 14))
+        tk.Label(header, text='Profile Maker', bg=SURFACE, fg='#0f172a', font=('Segoe UI', 20, 'bold')).pack(anchor='w', padx=18, pady=(16, 4))
+        tk.Label(header, text='Add a new card using the same fields already used by the database.', bg=SURFACE, fg='#64748b', font=('Segoe UI', 10)).pack(anchor='w', padx=18, pady=(0, 14))
 
-        form_box = tk.Frame(page, bg='white', bd=1, relief='solid')
+        form_box = tk.Frame(page, bg=SURFACE, bd=1, relief='solid')
         form_box.pack(fill=BOTH, expand=True, pady=16)
 
-        tk.Label(form_box, text='Card details', bg='white', fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=18, pady=(14, 10))
-        form = tk.Frame(form_box, bg='white')
+        tk.Label(form_box, text='Card details', bg=SURFACE, fg='#0f172a', font=('Segoe UI', 13, 'bold')).pack(anchor='w', padx=18, pady=(14, 10))
+        form = tk.Frame(form_box, bg=SURFACE)
         form.pack(fill=BOTH, expand=True, padx=18, pady=(0, 18))
 
         def row(parent, r, label, widget):
-            tk.Label(parent, text=label, bg='white', fg='#334155', font=('Segoe UI', 10, 'bold')).grid(row=r, column=0, sticky='w', padx=(0, 10), pady=8)
+            tk.Label(parent, text=label, bg=SURFACE, fg='#334155', font=('Segoe UI', 10, 'bold')).grid(row=r, column=0, sticky='w', padx=(0, 10), pady=8)
             widget.grid(row=r, column=1, sticky='ew', pady=8)
 
         form.columnconfigure(1, weight=1)
@@ -1188,7 +1592,7 @@ class ClashPediaApp:
         shield_entry = ttk.Entry(form, textvariable=shield_var)
         speed_entry = ttk.Entry(form, textvariable=speed_var)
         radius_entry = ttk.Entry(form, textvariable=radius_var)
-        image_label = tk.Label(form, text='No image selected', bg='white', fg='#64748b', anchor='w')
+        image_label = tk.Label(form, text='No image selected', bg=SURFACE, fg='#64748b', anchor='w')
 
         widgets = [
             ('Card name', name_entry),
@@ -1317,7 +1721,7 @@ class ClashPediaApp:
                 widget.destroy()
             tk.Label(preview_box, text='Preview', bg='#f8fafc', fg='#64748b').pack(expand=True)
 
-        actions = tk.Frame(form_box, bg='white')
+        actions = tk.Frame(form_box, bg=SURFACE)
         actions.pack(fill=X, padx=18, pady=(0, 18))
 
         ttk.Button(actions, text='Upload image', bootstyle='secondary', command=pick_image).pack(side=LEFT)
@@ -1326,7 +1730,7 @@ class ClashPediaApp:
         note = tk.Label(
             form_box,
             text='Tip: use the same names and categories already used by the existing Clash Royale data for the cleanest results.',
-            bg='white',
+            bg=SURFACE,
             fg='#64748b',
             font=('Segoe UI', 9),
         )
